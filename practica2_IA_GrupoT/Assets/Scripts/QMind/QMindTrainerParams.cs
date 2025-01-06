@@ -29,9 +29,9 @@ namespace QMind
     [Serializable]
     public class QMindTrainerParams
     {
-        public float alpha = 0.2f;
-        public float epsilon = 0.85f;
-        public float gamma = 0.9f;
+        public float alpha = 0.1f;
+        public float epsilon = 0.9f;
+        public float gamma = 0.95f;
         
         public int episodes = -1;
         public int maxSteps = 1000;
