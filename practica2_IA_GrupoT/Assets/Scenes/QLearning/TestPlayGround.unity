@@ -434,6 +434,7 @@ GameObject:
   m_Component:
   - component: {fileID: 403569453}
   - component: {fileID: 403569452}
+  - component: {fileID: 403569454}
   m_Layer: 0
   m_Name: QMindTester
   m_TagString: Untagged
@@ -456,8 +457,7 @@ MonoBehaviour:
   agent: {fileID: 1405488106}
   oponent: {fileID: 921274857}
   speed: 10
-  qMindClass: QMind.QMindDummy, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-    PublicKeyToken=null
+  qMindClass: GrupoT.QMind, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 --- !u!4 &403569453
 Transform:
   m_ObjectHideFlags: 0
@@ -473,6 +473,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &403569454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403569451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdf1c693b7619c44cb08c148b752c7eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  train: 1
 --- !u!1 &414741300
 GameObject:
   m_ObjectHideFlags: 0

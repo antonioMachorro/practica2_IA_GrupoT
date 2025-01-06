@@ -17,12 +17,10 @@ namespace GrupoT
         private QMindTrainer _trainer;
         private static int ACTIONS = 4;
         private const string qTableFile = "QTable.csv";
-        public bool train = false;
 
         public void Initialize(WorldInfo worldInfo)
         {
             Debug.Log("QMind: initialized");
-            Debug.Log("TRAINING MODE: " + train);
             _worldInfo = worldInfo;
             _qTable = new Dictionary<(int, int), float[]>();
 
@@ -38,7 +36,6 @@ namespace GrupoT
             if (!File.Exists(path))
             {
                 Debug.LogWarning("Q-Table not found.");
-                train = true;
 
                 return;
             }
@@ -65,12 +62,6 @@ namespace GrupoT
         public CellInfo GetNextStep(CellInfo currentPosition, CellInfo otherPosition)
         {
             Debug.Log("QMind: GetNextStep");
-
-            if(train)
-            {
-                _trainer.DoStep(true);
-                return _trainer.AgentPosition;
-            }
 
             if(!_qTable.ContainsKey((currentPosition.x, currentPosition.y)))
             {
