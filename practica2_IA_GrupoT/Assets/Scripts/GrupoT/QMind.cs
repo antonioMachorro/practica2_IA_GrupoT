@@ -25,7 +25,7 @@ namespace GrupoT
             _qTable = new Dictionary<(int, int), float[]>();
 
             _trainer = new QMindTrainer();
-            _trainer.Initialize(new QMindTrainerParams(), worldInfo, new NavigationDJIA.Algorithms.AStar.AStarNavigation());
+            //_trainer.Initialize(new QMindTrainerParams(), worldInfo, new NavigationDJIA.Algorithms.AStar.AStarNavigation());
 
             LoadQTable();
         }
