@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Diagnostics;
@@ -37,7 +38,7 @@ namespace GrupoT
             _navigationAlgorithm.Initialize(worldInfo);
 
             int possibleActions = 4;
-            int possibleStates = 16 * 9 * 18;
+            int possibleStates = 16 * 9 * 38;
             _qTable = new QTable(possibleActions, possibleStates);
 
             AgentPosition = worldInfo.RandomCell();
@@ -86,7 +87,6 @@ namespace GrupoT
             CellInfo[] path = _navigationAlgorithm.GetPath(OtherPosition, AgentPosition, 1);
             if (path != null && path.Length > 0)
             {
-                // Update the Player's position to the next step in the path
                 OtherPosition = path[0];
 
                 Debug.Log($"Player moved to {OtherPosition.x}, {OtherPosition.y}");
@@ -107,7 +107,7 @@ namespace GrupoT
                 CurrentStep++;
             }
 
-            //Debug.Log($"Agent moved to {AgentPosition.x}, {AgentPosition.y} using action {action}");
+            Debug.Log($"Agent moved to {AgentPosition.x}, {AgentPosition.y} using action {action}");
         }
 
         private void NewEpisode()
@@ -119,6 +119,11 @@ namespace GrupoT
 
             CurrentStep = 0;
             Return = 0;
+
+            if(CurrentEpisode % _params.episodesBetweenSaves == 0)
+            {
+                SaveQTable(@"Assets/Scripts/GrupoT/QTable.csv");
+            }
 
             OnEpisodeStarted?.Invoke(this, EventArgs.Empty);
 
@@ -172,7 +177,7 @@ namespace GrupoT
                 }
             }
 
-            throw new Exception("Current state does not match any precomputed state.");
+            throw new Exception($"Current N={nIsWall}, S={sIsWall}, E={eIsWall}, W={wIsWall}, Dist={manhattan}, Pos={position} does not match any precomputed state.");
         }
 
         private int CalculatePosition()
@@ -192,6 +197,37 @@ namespace GrupoT
             if (nextCell == OtherPosition) return -100;
             if (fDistance > iDistance) return 10;
             return -1;
+        }
+
+        private void SaveQTable(string filePath)
+        {
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                writer.WriteLine("StateID,NorthIsWall,SouthIsWall,EastIsWall,WestIsWall,ManhattanDistance,PositionToPlayer,Q_Up,Q_Right,Q_Down,Q_Left");
+
+                foreach (State state in _qTable.GetAllStates())
+                {
+                    List<string> row = new List<string>
+                    {
+                        state.stateId.ToString(),
+                        state.NorthIsWall ? "1" : "0",
+                        state.SouthIsWall ? "1" : "0",
+                        state.EastIsWall ? "1" : "0",
+                        state.WestIsWall ? "1" : "0",
+                        state.ManhattanDistanceToPlayer.ToString(),
+                        state.PositionToPlayer.ToString()
+                    };
+
+                    for (int action = 0; action < 4; action++)
+                    {
+                        row.Add(_qTable.GetQValue(state.stateId, action).ToString());
+                    }
+
+                    writer.WriteLine(string.Join(",", row));
+                }
+            }
+
+            Debug.Log($"QTable saved: {filePath}");
         }
     }
 }

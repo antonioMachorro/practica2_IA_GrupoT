@@ -590,7 +590,7 @@ MonoBehaviour:
     gamma: 0.9
     episodes: 1000
     maxSteps: -1
-    episodesBetweenSaves: 100
+    episodesBetweenSaves: 10
 --- !u!4 &430024629
 Transform:
   m_ObjectHideFlags: 0

@@ -35,7 +35,7 @@ public class QTable
                     {
                         for (int pos = 0; pos <= 4; pos++)
                         {
-                            for (int dist = 1; dist <= 18; dist++)
+                            for (int dist = 1; dist <= 38; dist++)
                             {
                                 State state = new State(n == 1, s == 1, e == 1, w == 1, dist, pos, stateId);
                                 AddState(state);
