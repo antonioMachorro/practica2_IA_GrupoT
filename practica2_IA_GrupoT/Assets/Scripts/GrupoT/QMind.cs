@@ -11,11 +11,10 @@ namespace GrupoT
 {
     public class QMind : MonoBehaviour, IQMind
     {
-
         private Dictionary<(int, int), float[]> _qTable;
         private WorldInfo _worldInfo;
         private QMindTrainer _trainer;
-        private static int ACTIONS = 4;
+        private static int ACTIONS = 4; // Solo 4 acciones: Arriba, Derecha, Abajo, Izquierda
         private const string qTableFile = "QTable.csv";
 
         public void Initialize(WorldInfo worldInfo)
@@ -23,9 +22,7 @@ namespace GrupoT
             Debug.Log("QMind: initialized");
             _worldInfo = worldInfo;
             _qTable = new Dictionary<(int, int), float[]>();
-
             _trainer = new QMindTrainer();
-            //_trainer.Initialize(new QMindTrainerParams(), worldInfo, new NavigationDJIA.Algorithms.AStar.AStarNavigation());
 
             LoadQTable();
         }
@@ -36,7 +33,6 @@ namespace GrupoT
             if (!File.Exists(path))
             {
                 Debug.LogWarning("Q-Table not found.");
-
                 return;
             }
 
@@ -63,23 +59,32 @@ namespace GrupoT
         {
             Debug.Log("QMind: GetNextStep");
 
-            if(!_qTable.ContainsKey((currentPosition.x, currentPosition.y)))
+            if (!_qTable.ContainsKey((currentPosition.x, currentPosition.y)))
             {
                 Debug.LogWarning($"No entry for position: ({currentPosition.x}, {currentPosition.y}). Random step.");
                 return GetRandomNeighbor(currentPosition);
             }
 
             int bestAction = SelectBestAction(currentPosition.x, currentPosition.y);
-            CellInfo nextCell = _worldInfo.NextCell(currentPosition, (Directions)bestAction);
+            Directions direction = (Directions)bestAction;
+
+            // Validar que la dirección sea cardinal
+            if (!IsCardinalDirection(direction))
+            {
+                Debug.LogWarning($"Invalid action: {direction}. Forcing random movement.");
+                return GetRandomNeighbor(currentPosition);
+            }
+
+            CellInfo nextCell = _worldInfo.NextCell(currentPosition, direction);
 
             if (!nextCell.Walkable)
             {
                 Debug.LogWarning($"Invalid move to: ({nextCell.x}, {nextCell.y}). Penalty applied.");
 
-                // Penalize Q-value for invalid action
+                // Penalizar Q-value para una acción inválida
                 _qTable[(currentPosition.x, currentPosition.y)][bestAction] -= 5f;
 
-                // Force random movement to break the loop
+                // Movimiento aleatorio para romper el bucle
                 return GetRandomNeighbor(currentPosition);
             }
 
@@ -92,10 +97,13 @@ namespace GrupoT
         {
             List<CellInfo> neighbors = new List<CellInfo>();
 
-            for (int i = 0; i < ACTIONS; i++)
+            // Solo revisa direcciones cardinales
+            for (int i = 0; i < ACTIONS; i++) // i representa las direcciones 0-3: Up, Right, Down, Left
             {
                 CellInfo nextCell = _worldInfo.NextCell(currentPosition, (Directions)i);
-                if(nextCell.Walkable)
+
+                // Validar si es caminable y si la dirección es cardinal
+                if (nextCell.Walkable && IsCardinalDirection((Directions)i))
                 {
                     neighbors.Add(nextCell);
                 }
@@ -115,6 +123,12 @@ namespace GrupoT
             float[] qValues = _qTable[(x, y)];
             int bestAction = Array.IndexOf(qValues, Mathf.Max(qValues));
             return bestAction;
+        }
+
+        private bool IsCardinalDirection(Directions direction)
+        {
+            return direction == Directions.Up || direction == Directions.Right ||
+                   direction == Directions.Down || direction == Directions.Left;
         }
     }
 }
