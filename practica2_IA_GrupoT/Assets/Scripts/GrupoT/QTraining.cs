@@ -97,6 +97,8 @@ namespace GrupoT
                 Debug.Log($"Current Q: {currentQ}");
             }
 
+            float reward = CalculateReward(nextCell);
+
             AgentPosition = nextCell;
 
             CellInfo[] path = _navigationAlgorithm.GetPath(OtherPosition, AgentPosition, 1);
@@ -110,9 +112,6 @@ namespace GrupoT
             {
                 Debug.Log("No valid path found for Player.");
             }
-
-
-            float reward = CalculateReward(nextCell);
 
             if (train)
             {
