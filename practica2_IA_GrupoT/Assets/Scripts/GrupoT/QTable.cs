@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,7 +9,6 @@ public class QTable
     private int _stateNum;
     private float[,] _qTable;
     private List<State> _stateList;
-    private Dictionary<int, int> _states;
 
     public QTable(int actions, int states) 
     {
@@ -16,7 +16,6 @@ public class QTable
         _stateNum = states;
         _qTable = new float[_stateNum, _actionNum];
         _stateList = new List<State>();
-        _states = new Dictionary<int, int>();
 
         InitializeStates();
         InitializeQTable();
@@ -35,7 +34,7 @@ public class QTable
                     {
                         for (int pos = 0; pos <= 4; pos++)
                         {
-                            for (int dist = 1; dist <= 38; dist++)
+                            for (int dist = 0; dist <= 38; dist++)
                             {
                                 State state = new State(n == 1, s == 1, e == 1, w == 1, dist, pos, stateId);
                                 AddState(state);
@@ -47,7 +46,7 @@ public class QTable
             }
         }
 
-        Debug.Log($"Initialized {_stateNum} states.");
+        Debug.Log($"Initialized {_stateList.Count} states.");
     }
 
     public void InitializeQTable()
@@ -63,20 +62,22 @@ public class QTable
 
     public void AddState(State state)
     {
+        if (state.stateId != _stateList.Count)
+        {
+            throw new InvalidOperationException($"StateId {state.stateId} does not match the current index {_stateList.Count}.");
+        }
+
         _stateList.Add(state);
-        _states[state.stateId] = _stateList.Count - 1;
     }
 
     public int GetStateIndex(int stateId)
     {
-        if(_states.ContainsKey(stateId))
+        if (stateId < 0 || stateId >= _stateList.Count)
         {
-            return _states[stateId];
+            throw new KeyNotFoundException($"State {stateId} is out of range.");
         }
-        else
-        {
-            throw new KeyNotFoundException($"State {stateId} not found.");
-        }
+
+        return stateId;
     }
 
     public float GetQValue(int stateId, int action)
@@ -88,6 +89,7 @@ public class QTable
     public void UpdateQValue(int stateId, int action, float newQ)
     {
         int stateIndex = GetStateIndex(stateId);
+        Debug.Log($"Updated Q value at: {stateIndex} with an action of {action} and a new Q of: {newQ}");
         _qTable[stateIndex, action] = newQ;
     }
 
@@ -117,7 +119,7 @@ public class QTable
         {
             if(_qTable[stateIndex, i] > maxQ)
             {
-                maxQ -= _qTable[stateIndex, i];
+                maxQ = _qTable[stateIndex, i];
                 bestAction = i;
             }
         }

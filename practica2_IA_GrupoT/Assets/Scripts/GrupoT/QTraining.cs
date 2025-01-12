@@ -38,8 +38,20 @@ namespace GrupoT
             _navigationAlgorithm.Initialize(worldInfo);
 
             int possibleActions = 4;
-            int possibleStates = 16 * 9 * 38;
-            _qTable = new QTable(possibleActions, possibleStates);
+            int possibleStates = 16 * 5 * 39;
+
+            string filePath = @"Assets/Scripts/GrupoT/QTable.csv";
+            if (File.Exists(filePath))
+            {
+                Debug.Log("Loading existing QTable...");
+                _qTable = new QTable(possibleActions, possibleStates);
+                LoadQTable(filePath);
+            }
+            else
+            {
+                Debug.Log("Creating new QTable...");
+                _qTable = new QTable(possibleActions, possibleStates);
+            }
 
             AgentPosition = worldInfo.RandomCell();
             OtherPosition = worldInfo.RandomCell();
@@ -60,6 +72,8 @@ namespace GrupoT
 
             CellInfo nextCell;
             int action;
+            float currentQ = 0;
+            int currentStateId = 0;
 
             do
             {
@@ -68,21 +82,22 @@ namespace GrupoT
                 nextCell = _worldInfo.NextCell(AgentPosition, GetDirection(action));
                 if(!nextCell.Walkable)
                 {
-                    float currentQ = _qTable.GetQValue(GetCurrentStateId(), action);
+                    currentQ = _qTable.GetQValue(GetCurrentStateId(), action);
                     float newQ = UpdateQ(currentQ, -999);
                     _qTable.UpdateQValue(GetCurrentStateId(), action, newQ);
                 }
             } while (!nextCell.Walkable);
 
-            AgentPosition = nextCell;
-            float reward = CalculateReward(nextCell);
+            Debug.Log($"Moving from {AgentPosition.x}, {AgentPosition.y} to {nextCell.x}, {nextCell.y}");
 
             if(train)
             {
-                float currentQ = _qTable.GetQValue(GetCurrentStateId(), action);
-                float newQ = UpdateQ(currentQ, reward);
-                _qTable.UpdateQValue(GetCurrentStateId(), action, newQ);
+                currentStateId = GetCurrentStateId();
+                currentQ = _qTable.GetQValue(currentStateId, action);
+                Debug.Log($"Current Q: {currentQ}");
             }
+
+            AgentPosition = nextCell;
 
             CellInfo[] path = _navigationAlgorithm.GetPath(OtherPosition, AgentPosition, 1);
             if (path != null && path.Length > 0)
@@ -94,6 +109,16 @@ namespace GrupoT
             else
             {
                 Debug.Log("No valid path found for Player.");
+            }
+
+
+            float reward = CalculateReward(nextCell);
+
+            if (train)
+            {
+                int newStateId = GetCurrentStateId();
+                float newQ = UpdateQ(currentQ, reward);
+                _qTable.UpdateQValue(currentStateId, action, newQ);
             }
             
 
@@ -151,6 +176,7 @@ namespace GrupoT
         public float UpdateQ(float currentQ, float reward)
         {
             float bestNextQ = _qTable.GetBestQ(GetCurrentStateId());
+            Debug.Log($"The calculation will be: currentQ: {currentQ}, reward: {reward}, bestNextQ:{bestNextQ}");
             return (1 - _params.alpha) * currentQ + _params.alpha * (reward + _params.gamma * bestNextQ);
         }
 
@@ -194,9 +220,10 @@ namespace GrupoT
             float iDistance = AgentPosition.Distance(OtherPosition, CellInfo.DistanceType.Manhattan);
             float fDistance = nextCell.Distance(OtherPosition, CellInfo.DistanceType.Manhattan);
 
-            if (nextCell == OtherPosition) return -100;
-            if (fDistance > iDistance) return 10;
-            return -1;
+            if (nextCell == OtherPosition) return -200;
+            if (fDistance > iDistance) return 5 * (fDistance - iDistance);
+            if (fDistance < iDistance) return -15;
+            return -5;
         }
 
         private void SaveQTable(string filePath)
@@ -228,6 +255,40 @@ namespace GrupoT
             }
 
             Debug.Log($"QTable saved: {filePath}");
+        }
+
+        private void LoadQTable(string filePath)
+        {
+            string[] lines = File.ReadAllLines(filePath);
+            for (int i = 1; i < lines.Length; i++)
+            {
+                string line = lines[i].Trim();
+                if (string.IsNullOrEmpty(line)) continue;
+
+                string[] values = line.Split(',');
+
+                if (values.Length < 11)
+                {
+                    Debug.LogError($"Malformed line: {line}");
+                    continue;
+                }
+
+                try
+                {
+                    int stateId = int.Parse(values[0]);
+                    for (int action = 0; action < 4; action++)
+                    {
+                        float qValue = float.Parse(values[7 + action]);
+                        _qTable.UpdateQValue(stateId, action, qValue);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Error parsing line: {line}. Exception: {ex.Message}");
+                }
+            }
+
+            Debug.Log("QTable loaded successfully.");
         }
     }
 }
